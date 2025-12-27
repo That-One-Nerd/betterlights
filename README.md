@@ -1,5 +1,20 @@
 # Better Light Strips
 
+Contents:
+- [About](#better-light-strips)
+    - [What this library does](#what-this-library-does)
+    - [What this library does NOT do](#what-this-library-doesnt-do-yet)
+- [Installation](#installation)
+- [Usage](#usage)
+    - [Use Case](#use-case)
+    - [Configuration](#configuration)
+        - [Strip Segments](#strip-segments)
+        - [States](#states)
+    - [Using States](#using-states)
+    - [Custom Patterns](#custom-patterns)
+
+---
+
 This is a WPILib "library" that aims to add customization power to robot light strips.
 
 Writing your own animation code is annoying, and not something you want to spend time doing during a season. If you are, you're mismanaging your time. This library makes things faster.
@@ -10,44 +25,39 @@ Work-in-progress. Feel free to use it.
 
 **This library ALSO is not reliably maintained.** Fork or use at your own risk.
 
-### What this library does.
+## What this library does.
 
 - Allows you to create your own classes to represent animated patterns, or use some predefined ones.
 - Implements a state machine with a priority system.
 - Animates patterns on its own clock.
 - Dynamically transitions between patterns (you can customize these, too).
 
-### What this library doesn't do YET.
+## What this library doesn't do YET.
 
 - Support multiple LED strips (planning to add that later).
 
-## Install
+# Installation
 
 No vendordep yet. Maybe in the future.
 
-Copy the `betterlights` folder into your project's `src/main/java/`, such that the result is `src/main/java/betterlights`.
-
-Alternatively, you can **clone via `git submodule`** to allow for easily updating the project to a new release.
+- **Recommended Installation**: Clone via `git submodule`. Requires a git repository.
+    - `cd ./src/main/java`
+    - `git submodule add https://github.com/That-One-Nerd/betterlights`
+- Alternatively, you could manually create a folder called `src/main/java/betterlights` and paste the source code from the latest release there.
 
 That's it. The Java package is `betterlights`.
 
-## Usage
+# Usage
 
-Contents:
-- [Use-Case](#use-case)
-- [Configuration](#configuration)
-    - [Strip Segments](#strip-segments)
-    - [States](#states)
-- [Using States](#using-states)
-- [Custom Patterns](#custom-patterns)
+## Use Case
 
-### Use-Case
+Normal WPILib convention is to create a subsystem dedicated to light strips. This is not how this library is intended to be used, and is in fact the problem this library was created to fix.
 
-You should decide up-front how you want to use this library. The normal WPILib convention is to create a subsystem dedicated to light strips, and there's nothing wrong with using this system for that purpose. However, this system is designed to forgo the subsystem entirely. All state logic is handled by the scheduler.
+Rather, all configuration is intended to be done up-front in the `Robot.robotInit()` method or similar. Light segment patterns are managed and animated by the `LightScheduler`, and new states are requested directly, where each subsystem creates its own `LightStatusRequest` object.
 
-This library was created in the context of subsystems that have control over the lights. It's designed to be mounted upon an existing subsystem as a little bit of extra light code, rather than passing a reference to the light subsystem to all other subsystems and managing a state machine. It can be used in a dedicated subsystem, but note that most of the work done by the subsystem will likely be redundant.
+You can decide to use this library in the more traditional way, but most subsystem code wrapped around this library would likely be redundant. Feel free to use it in your own way.
 
-### Configuration
+## Configuration
 
 The first thing you need to do is configure your light scheduler. I recommend doing this in `Robot.robotInit()` or a dedicated LED subsystem. The `LightScheduler.configure()` method returns a configuration class. You can either save this to a variable, or run methods directly. This class follows the convention of a builder, so all methods return the original instance, for ease of use.
 
@@ -63,7 +73,7 @@ void robotInit() {
 }
 ```
 
-#### Strip Segments
+### Strip Segments
 
 Now you should define your light strips. This library is prepared to support multiple *individual* light strips, but at the moment **it does not**. What you **can** do is split a single light strip into multiple segments. Here's a good example: maybe your light strip has one half for the left side of the robot and one half for the right side.
 
@@ -79,7 +89,7 @@ lightConfig.withNamedLightSegment("leftside", 3, 0, 19);   // LEDs #0-#19
 lightConfig.withNamedLightSegment("rightside", 3, 30, 49); // Skipping our block of 10.
 ```
 
-#### States
+### States
 
 Then we define our states. You can have global states that apply to all segments, as well as specific strip states. A good example would be a decoration strip and a debug strip. Things such as the disabled animation could be a global state that affects both strips, but otherwise the decoration strip and the debug strip would be controlled independently and show different values.
 
@@ -129,7 +139,7 @@ LightScheduler.start();
 
 That's it! Check the logs if you have any warnings or errors.
 
-### Using States
+## Using States
 
 To use a state, you must request it. You can request a particular state for one or more segments with `LightScheduler.requestState()`. The state is applied to all segments that defined a state with the name given.
 
@@ -202,7 +212,7 @@ If you wish for the request to be disposed of when `disable()` is called, set `r
 
 This is not recommended, but you can also directly change the state requested by the object. Simply set `request.state = "new-state"`.
 
-### Custom Patterns
+## Custom Patterns
 
 Creating your own animations is simple with this library. All you need to do is create a class that extends the `LightPattern` base class. This class implements the standard `LEDPattern` interface, so it *is* backwards compatible, though time will not be automatically incremented in that case.
 
@@ -243,4 +253,4 @@ There are some additional optional methods.
 
 Some helper methods have been defined for you, namely the `colorLerp(Color, Color, float)` which will interpolate between colors.
 
-An optional fourth gamma parameter is accepted. An ideal gamma value makes interpolated colors more vibrant. On displays (in simulation) a gamma value of 2.2 is recommended, while on LED strips it is typically closer to 1. See [this video](https://youtu.be/LKnqECcg6Gw) for more information about why it matters.
+An optional fourth gamma parameter is accepted. An ideal gamma value makes interpolated colors more vibrant. On displays (in simulation) a gamma value of 2.2 is recommended, while on LED strips it is typically closer to 1. See [this short video](https://youtu.be/LKnqECcg6Gw) for more information about why it matters.
